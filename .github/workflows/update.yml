@@ -14,6 +14,11 @@ on:
   schedule:
     - cron: "0 19 * * *"
   workflow_dispatch:
+  # 맥(한국 IP)에서 수집한 신규 데이터를 push하면 즉시 사이트에 반영한다.
+  # 봇 커밋(GITHUB_TOKEN)은 워크플로를 재트리거하지 않으므로 순환하지 않는다.
+  push:
+    branches: [main]
+    paths: ["qa/**"]
 
 permissions:
   contents: write
