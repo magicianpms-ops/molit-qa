@@ -1,0 +1,27 @@
+name: connectivity-test
+
+# 정부 사이트가 GitHub 러너(해외 데이터센터 IP)에서 접속되는지 검증하는 1회성 게이트.
+# 여기서 막히면 클라우드 자동화 자체가 불가능하므로 본 워크플로를 먼저 통과시킨다.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 소스① 국토부 민원마당 접속 확인
+        run: |
+          echo "::group::scrape_molit --pages 1"
+          python3 scrape_molit.py --pages 1 --new-only --no-snapshot --delay 1.0
+          echo "::endgroup::"
+
+      - name: 소스② 국민신문고 접속 확인
+        run: |
+          echo "::group::scrape_epeople --pages 1"
+          python3 scrape_epeople.py --pages 1 --new-only --no-snapshot --delay 1.0
+          echo "::endgroup::"
+
+      - name: 결과
+        run: echo "두 소스 모두 러너에서 접속 성공 — 클라우드 이전 가능"

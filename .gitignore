@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+logs/
+.DS_Store
+
+# 비밀키 (절대 커밋 금지)
+.openai_key
+.env
+.env.local
+
+# 생성물 — CI가 매 실행마다 새로 빌드해 Pages로 배포
+qa/browse.html
+qa/browse.embed.html
