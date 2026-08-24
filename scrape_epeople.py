@@ -50,14 +50,23 @@ def make_session():
     cj = http.cookiejar.CookieJar()
     op = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
     op.addheaders = [("User-Agent", UA), ("Referer", LIST_URL)]
-    # 세션 쿠키 + CSRF 토큰 확보
-    home = op.open(LIST_URL, timeout=30).read().decode("utf-8", "replace")
+    # 세션 쿠키 + CSRF 토큰 확보 — 여기서 죽으면 실행 전체가 무산되므로 동일 백오프 적용
+    for i in range(5):
+        try:
+            home = op.open(LIST_URL, timeout=30).read().decode("utf-8", "replace")
+            break
+        except Exception:  # noqa: BLE001 — 시스템 경계, 재시도
+            if i == 4:
+                raise
+            time.sleep(min(3 * 3 ** i, 60))
     m = re.search(r'name="_csrf" value="([^"]+)"', home)
     csrf = m.group(1) if m else ""
     return op, csrf
 
 
-def post(op, url, data, csrf, retries=3):
+def post(op, url, data, csrf, retries=5):
+    # 백오프는 지수(3·9·27·60초). 짧은 재시도(1.5·3초)는 스로틀 구간을 못 벗어나
+    # 3회가 한꺼번에 타임아웃된다 — GitHub 러너에서 실제로 이 방식으로 실패했다.
     body = urllib.parse.urlencode(data).encode()
     req = urllib.request.Request(url, data=body)
     req.add_header("X-CSRF-TOKEN", csrf)
@@ -70,7 +79,7 @@ def post(op, url, data, csrf, retries=3):
         except Exception:  # noqa: BLE001 — 시스템 경계, 재시도
             if i == retries - 1:
                 raise
-            time.sleep(1.5 * (i + 1))
+            time.sleep(min(3 * 3 ** i, 60))
     return ""
 
 

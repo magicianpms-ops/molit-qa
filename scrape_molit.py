@@ -54,7 +54,9 @@ def make_opener():
     return op
 
 
-def fetch(op, url, data=None, retries=3):
+def fetch(op, url, data=None, retries=5):
+    # 백오프는 지수(3·9·27·60초). 정부 사이트가 연속 요청을 스로틀하면 수십 초간
+    # TLS 핸드셰이크가 통째로 막히므로, 짧은 재시도는 같은 구간에 갇혀 함께 실패한다.
     body = urllib.parse.urlencode(data).encode() if data else None
     for i in range(retries):
         try:
@@ -63,7 +65,7 @@ def fetch(op, url, data=None, retries=3):
         except Exception as e:  # noqa: BLE001 - 시스템 경계, 재시도
             if i == retries - 1:
                 raise
-            time.sleep(1.5 * (i + 1))
+            time.sleep(min(3 * 3 ** i, 60))
     return ""
 
 
