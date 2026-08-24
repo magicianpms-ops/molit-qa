@@ -20,12 +20,12 @@ ROOT = Path(__file__).resolve().parent
 CACHE = ROOT / "qa" / "llm_cat.json"
 MODEL = "gpt-5.4-nano"
 
-# 키 탐색 순서(NAS 이식용): 환경변수 → 프로젝트 로컬 .openai_key → Mac lh 폴백
+# 키 탐색 순서: 환경변수(CI에서는 이 경로) → 프로젝트 로컬 .openai_key
+#              → MOLITQA_KEY_FILE로 지정한 외부 파일(로컬 폴백)
 import os
-KEY_SOURCES = [
-    ROOT / ".openai_key",
-    Path("/Users/ju-in/Desktop/바탕화면 폴더/ai/lh/.env.local"),
-]
+KEY_SOURCES = [ROOT / ".openai_key"]
+if os.environ.get("MOLITQA_KEY_FILE"):
+    KEY_SOURCES.append(Path(os.environ["MOLITQA_KEY_FILE"]))
 
 SYS = ("너는 대한민국 건축 관련 민원/질의를 정확히 하나로 분류한다.\n"
        "- 안전: 시공·건설 안전, 재해/붕괴/추락, 안전관리계획, 구조안전, "
